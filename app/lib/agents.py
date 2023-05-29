@@ -27,8 +27,7 @@ def use_memory(chatbot_id: str) -> List:
         else history.add_user_message(message["message"])
         for message in messages.data
     ]
-    memory = ConversationBufferMemory(chat_memory=history)
-    return memory
+    return ConversationBufferMemory(chat_memory=history)
 
 
 def use_datasource(datasource_id: str) -> Any:
@@ -49,8 +48,7 @@ def use_datasource(datasource_id: str) -> Any:
         loader = UnstructuredAPIFileIOLoader(
             file=file_repsonse.content, file_filename=file_name
         )
-        docs = loader.load()
-        return docs
+        return loader.load()
     except Exception as e:
         print(e)
 
@@ -67,8 +65,7 @@ def make_datasource_agent(
         verbose=True,
         callbacks=[StreamingLLMCallbackHandler(on_llm_new_token, on_llm_end)],
     )
-    agent = LLMChain(llm=llm, memory=memory, verbose=True, prompt=default_prompt)
-    return agent
+    return LLMChain(llm=llm, memory=memory, verbose=True, prompt=default_prompt)
 
 
 def make_default_agent(chatbot_id: str, on_llm_new_token: Any, on_llm_end: Any):
@@ -79,8 +76,7 @@ def make_default_agent(chatbot_id: str, on_llm_new_token: Any, on_llm_end: Any):
         verbose=True,
         callbacks=[StreamingLLMCallbackHandler(on_llm_new_token, on_llm_end)],
     )
-    agent = LLMChain(llm=llm, memory=memory, verbose=True, prompt=default_prompt)
-    return agent
+    return LLMChain(llm=llm, memory=memory, verbose=True, prompt=default_prompt)
 
 
 def make_agent(chatbot_id: str, on_llm_new_token: Any, on_llm_end: Any):
@@ -92,20 +88,17 @@ def make_agent(chatbot_id: str, on_llm_new_token: Any, on_llm_end: Any):
         .single()
         .execute()
     )
-    datasource = chatbot.data["datasourceId"]
-
-    if datasource:
-        agent = make_datasource_agent(
+    return (
+        make_datasource_agent(
             chatbot_id=chatbot_id,
             datasource_id=datasource,
             on_llm_new_token=on_llm_new_token,
             on_llm_end=on_llm_end,
         )
-    else:
-        agent = make_default_agent(
+        if (datasource := chatbot.data["datasourceId"])
+        else make_default_agent(
             chatbot_id=chatbot_id,
             on_llm_new_token=on_llm_new_token,
             on_llm_end=on_llm_end,
         )
-
-    return agent
+    )
